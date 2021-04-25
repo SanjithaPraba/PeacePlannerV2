@@ -53,7 +53,7 @@ class SelfCareListScreen extends React.Component {
   pointValue: 25,
   activity: 'Draw',
   toggled: false
-},
+}, 
 {
   pointValue: 25,
   activity: 'Yoga',
