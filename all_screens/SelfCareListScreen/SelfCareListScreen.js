@@ -7,11 +7,13 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 const windowWidth = Dimensions.get('window').width;
 const windowHeight = Dimensions.get('window').height;
 
- //this wouldn't work great but could use one storage key 
- //store entire desiredTasksArray (from points screen) in that one
+global.globalDesiredTasksArray = [
+  {
+    pointValue: "15",
+    activity: "Biking"
+  }
+]
 
- //plan b: save the global array in async storage, use on submit with the save button
- //could atleast get the point compilation part done
 const STORAGE_KEY = '@saveDesiredTasks'
 
 class SelfCareListScreen extends React.Component {
@@ -22,48 +24,57 @@ class SelfCareListScreen extends React.Component {
       {
       pointValue: 15,
       activity: 'Biking',
-      toggled: true
+      toggled: true,
+      text: "Push"
   },
   {
       pointValue: 20,
       activity: 'Walking',
-      toggled: true
+      toggled: true,
+      text: "Push"
   },
   {
       pointValue: 25,
       activity: 'Running',
-      toggled: false
+      toggled: false,
+      text: "Push"
   },
 {
     pointValue: 15,
     activity: 'Journal',
-    toggled: false
+    toggled: false,
+    text: "Push"
 },
 {
     pointValue: 20,
     activity: 'Podcast',
-    toggled: false
+    toggled: false,
+    text: "Push"
 },
 {
     pointValue: 25,
     activity: 'Listen to Music',
-    toggled: false
+    toggled: false,
+    text: "Push"
 },
 {
   pointValue: 25,
   activity: 'Draw',
-  toggled: false
-}, 
+  toggled: false,
+  text: "Push"
+},
 {
   pointValue: 25,
   activity: 'Yoga',
-  toggled: false
+  toggled: false,
+  text: "Push"
 },
 
 {
   pointValue: 25,
   activity: 'Meditate',
-  toggled: false
+  toggled: false,
+  text: "Push"
 },
 ],
 
@@ -119,6 +130,7 @@ removeEverything = async () => {
   }
 }
 
+
 componentDidMount() {
   this.retrieveData()
 }
@@ -136,32 +148,44 @@ onChangeText = text => this.setState({ text })
  
  {this.state.desiredTasksArray.map((screenObject, i) =>(
          
-         <View style={styles.screenBreakListContainer}>
-            <View style={styles.pointValueContainer}>
-              <Text style={styles.textStyle}>{screenObject.pointValue}</Text>
+         <View style={styles.objectContainer}>
+
+            <View style={styles.pointContainer}>
+              <Text style={styles.pointText}>{screenObject.pointValue}</Text>
              </View>
                   
             <View style={styles.pointContainer}>
-              <Text style={styles.textStyle}>{screenObject.activity}</Text>
+              <Text style={styles.pointText}>{screenObject.activity}</Text>
             </View>  
 
-            <View style = {styles.buttonContainer}>
+            <View style = {styles.pointContainer}>
  
-            <View style = {styles.innerButtonContainer}>
             <TouchableOpacity 
-              style = {styles.redButton}
               onPress = {() => {
                 global.globalDesiredTasksArray.splice(i, 1);
                 this.state.desiredTasksArray.splice(i, 1);
                 this.setState({
                   desiredTasksArray: this.state.desiredTasksArray
                 })
+                
+
+                try {
+                  const value = AsyncStorage.getItem(STORAGE_KEY)
+                  if(value != null) {
+                    value.splice(i,1)
+                    AsyncStorage.setItem(STORAGE_KEY, value);
+                  }
+                } catch(exception) {
+                  alert("Unable to remove item")
+                }
               }}
             >
-              <Text style = {styles.buttonText}>Pop</Text>
-            </TouchableOpacity>
 
-              </View>
+            <View style = {styles.redButton}>
+            <Text style = {styles.buttonText}>Pop</Text>
+            </View>
+            </TouchableOpacity>
+    
             </View>
 
          </View>
@@ -170,45 +194,61 @@ onChangeText = text => this.setState({ text })
 <Text>Self-Care Task Options</Text>
 {this.state.activityList.map((screenObject, i, activityList) =>(
          
-         <View style={styles.screenBreakListContainer}>
-            <View style={styles.pointValueContainer}>
-              <Text style={styles.textStyle}>{screenObject.pointValue}</Text>
+         <View style={styles.objectContainer}>
+            <View style={styles.pointContainer}>
+              <Text style={styles.pointText}>{screenObject.pointValue}</Text>
              </View>
                   
             <View style={styles.pointContainer}>
-              <Text style={styles.textStyle}>{screenObject.activity}</Text>
+              <Text style={styles.pointText}>{screenObject.activity}</Text>
             </View>  
 
-            <View style = {styles.buttonContainer}>
-
-              <View style = {styles.innerButtonContainer}>
- 
+            <View style = {styles.pointContainer}>
             <TouchableOpacity 
-              style = {styles.greenButton} 
               onPress = {() => {
-                this.state.desiredTasksArray.push(activityList[i]);
-                global.globalDesiredTasksArray.push(activityList[i]);
+                this.state.activityList[i].toggled = !this.state.activityList[i].toggled
+
+                if(this.state.activityList[i].toggled) {
+                  this.state.desiredTasksArray.push(activityList[i]);
+                  global.globalDesiredTasksArray.push(activityList[i]);
                 this.setState({
-                  desiredTasksArray: this.state.desiredTasksArray
+                  desiredTasksArray: this.state.desiredTasksArray,
                 })
+              }
+
+              
                 const onSave = this.save
                 onSave(this.state.desiredTasksArray)
               }
             }
             >
-              <Text style = {styles.buttonText}>Push</Text>
-            </TouchableOpacity>
 
+        <View style = {
+          {backgroundColor: activityList[i].toggled ? "red": "green",
+          justifyContent: "center",
+          alignItems: "center",
+          height: windowHeight/10,
+          width: windowWidth/4, 
+          borderRadius: 10}
+        }
+        >
+
+          <Text style = {styles.buttonText}>Push</Text>
+        </View>
+
+            </TouchableOpacity>
             </View>
             
             </View>
-         </View>
+
   ))}
 
-  <TouchableOpacity>
-     <View style = {styles.saveButton}>
+  <TouchableOpacity
+    onPress = {this.removeEverything}  
+  >
+     <View style = {styles.clearButton}>
         <Text style = {styles.buttonText}>
-          Save
+          Clear Tasks
         </Text>
      </View>
      </TouchableOpacity>
@@ -221,84 +261,54 @@ onChangeText = text => this.setState({ text })
 
  
 const styles = StyleSheet.create({
- container: {
-   flex: 1
- },
-titleText: {
-  fontSize: 15,
-  fontWeight: 'bold'
+  container: {
+    height: windowHeight,
+    width: windowWidth
+  },
+  pointContainer: {
+    width: windowWidth/4,
+    height: windowHeight/3,
+    alignItems: 'center',
+    justifyContent: 'center',
 },
- screenBreakListContainer: {
-   flexDirection: 'row',
-   borderBottomWidth: 1,
-   borderBottomColor: 'white',
-   backgroundColor: '#D3FAFF',
+pointText: {
+  textAlign: 'center',
+  fontFamily: 'Arial',
+  fontSize: 20
 },
-pointValueContainer: {
-   flex: 1,
-   height: 75,
-   alignItems: 'center',
-   justifyContent: 'center'
-},
-middleContainer: {
-   flex: 1,
-   margin: 10,
-   flexDirection: 'row',
-   alignItems: 'center',
-   justifyContent: 'center'
-},
-pointContainer: {
-  width: windowWidth/4,
-  height: windowHeight/3,
+objectContainer: {
+  flexDirection: 'row',
+  width: windowWidth,
+  height: windowHeight/8,
   alignItems: 'center',
   justifyContent: 'center',
-  margin: 1
+  //borderBottomWidth: 1,
+  borderBottomColor: 'white',
+  backgroundColor: '#ADFCFF',
 },
-textStyle: {
-   color: 'black',
-   fontSize: 20,
-   textAlign: 'center'
+ redButton: {
+  backgroundColor: "red",
+  justifyContent: "center",
+  alignItems: "center",
+  borderRadius: 10,
+  height: windowHeight/10,
+  width: windowWidth/4
 },
 greenButton: {
-   justifyContent: "center",
-   alignItems: "center",
-   margin: 10,
-   borderRadius: 10,
-   backgroundColor: "green",
-   height: windowHeight/10
+  
 },
- 
- redButton: {
-   backgroundColor: "red",
-   justifyContent: "center",
-   alignItems: "center",
-   margin: 10,
-   borderRadius: 10,
-   height: windowHeight/10
- },
- 
-buttonContainer: {
-  height: windowHeight/10,
-  width: windowWidth/3,
-  flexDirection: 'row'
+buttonText: {
+  color: 'white',
+  fontSize: 14
 },
-
- buttonText: {
-   color: 'white',
-   fontSize: 14
- },
- innerButtonContainer: {
-   height: windowHeight,
-   width: windowWidth/3,
- },
- saveButton: {
+ clearButton: {
   backgroundColor: "#5233ff",
   justifyContent: "center",
   alignItems: "center",
   margin: 10,
-  borderRadius: 10,
   height: windowHeight/10,
-  width: windowWidth/4
+  width: windowWidth/4, 
+  borderRadius: 10
  }
 });
  
